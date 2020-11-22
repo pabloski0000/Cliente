@@ -1,0 +1,10 @@
+.tabla {border: thin solid black;
+	   border-collapse: collapse;
+	   margin-top:15px; 
+	   width: 100px;
+	   height:40px;
+	   padding: 0px;
+	   text-align: center;   }
+	   
+.error {border: solid 2px #FF0000;}	   
+
