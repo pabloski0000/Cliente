@@ -16,6 +16,7 @@ window.onload = function() {
 	let xIzquierda, xDerecha, xIzquierdaMaquina, xDerechaMaquina;
 	const TOPEDERECHA = 460, TOPEIZQUIERDA = 0;
 	
+	
 	var animacionComecocos = [[0,0],[32,0],[0,65],[32,65]]; // Posiciones del sprite donde recortar cada imagenn 
 	//(0 cerrado derecha, 1 abierto derecha, 2 cerrado izquierda, 3 cerrado izquierda)
 	var posicion=0;                                         // Posición del array 0, 1, 2, 3
