@@ -1,10 +1,11 @@
 window.onload = function (){
-    let cont = 0;
+    let contEnviosFormulario = 0;
     let cookies = [];
-    let cookieAMostrar;
     const NOMBRECOOKIE = 'Inicios';
     let comprobacionCookie = /^( )?Inicios=/;
     let respuestaConfirmacion = false;
+    let formularioValido = true;
+    const CLASEERROR = 'error';
 
 
     let formulario = document.getElementById('formulario');
@@ -36,7 +37,7 @@ window.onload = function (){
     /*Comprueba que se empiece la dirección con uno o más carácteres ASCII comprendidos entre el 32(espacio) y el 237(Ý) después de esto que contenga el '@' uno o más caráteres entre el rago ASCII ya mencionado luego un punto y que termine con dos, tre o cuatro carácteres entre la 'a' y la 'z' (ñ o carácteres con tildes no incluidos)*/
     comprobarEmail = /^[ -Ý]+@[ -Ý]*\.[a-z]{2,4}$/;
     /*Nos aseguramos que contenga al menos un dígito al principio de la fecha que continue con un guión '-' o un slash '/' que vuelva a introducir un dígito como mínimo después un guión o un slash después un uno o un dos seguido de  1 a tres dígitos mas*/
-    comprobarFecha = /^[0-9]+(\/||-)[0-9]+(\/||-)[1-2][0-9]{1,3}$/;
+    comprobarFecha = /^[0-9]+(\/||-)[0-9]+(\/||-)[1-2][0-9]{3}$/;
     /*Comprobamos que el número comience por un 6 o un 7 y que le siguan 8 dígitos más (esta expresión regular esta formada para números de origen Español)*/
     comprobarTelefono = /^[6-7][0-9]{8}$/;
     /*Comprobamos que contenga uno a dos dígitos después dos puntos ':' y que termine con uno o dos dígitos*/
@@ -75,110 +76,92 @@ window.onload = function (){
     contenedorErrores.appendChild(nodoReferencia);
     
     function comprobarFormulario(event){
-        let formularioValido = true;
-        ++cont;
-        setCookie(NOMBRECOOKIE,cont,1);
+        formularioValido = true;
+        ++contEnviosFormulario;
+        setCookie(NOMBRECOOKIE,contEnviosFormulario,1);
         
         cookies = document.cookie.split(';');
         
         
-        if(!comprobarHora.test(inputHora.value)){
-            formularioValido = false;
-            inputHora.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorHora,contenedorErrores.firstChild);
-            mensajeErrorHora.innerHTML = 'HORA DE VISITA: Las horas y los minutos deben ir separados por dos los puntos ":" ';
-            inputHora.focus();
-        }else{
+        if(comprobarHora.test(inputHora.value)){
             inputHora.className = '';
             mensajeErrorHora.remove();
+        }else{
+            asignarError(inputHora);
+            contenedorErrores.insertBefore(mensajeErrorHora,contenedorErrores.firstChild);
+            mensajeErrorHora.innerHTML = 'HORA DE VISITA: Las horas y los minutos deben ir separados por dos los puntos ":" ';
         }
         
-        if(!comprobarTelefono.test(inputTelefono.value)){
-            formularioValido = false;
-            inputTelefono.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorTelefono,contenedorErrores.firstChild);
-            mensajeErrorTelefono.innerHTML = 'TELÉFONO: El número de teléfono debe empezar por 6 o 7 y que sean 9 números en total';
-            inputTelefono.focus();
-        }else{
+        if(comprobarTelefono.test(inputTelefono.value)){
             inputTelefono.className = '';
             mensajeErrorTelefono.remove();
+        }else{
+            asignarError(inputTelefono);
+            contenedorErrores.insertBefore(mensajeErrorTelefono,contenedorErrores.firstChild);
+            mensajeErrorTelefono.innerHTML = 'TELÉFONO: El número de teléfono debe empezar por 6 o 7 y deben ser 9 números en total';
         }
         
-        if(!comprobarFecha.test(inputFecha.value)){
-            formularioValido = false;
-            inputFecha.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorFecha,contenedorErrores.firstChild);
-            mensajeErrorFecha.innerHTML = "FECHA NACIMIENTO: Debes separar con guiones '-' o con barras '/', y recuerda que el año debe tener cuatro números";
-            inputFecha.focus();
-        }else{
+        if(comprobarFecha.test(inputFecha.value)){
             inputFecha.className = '';
             mensajeErrorFecha.remove();
+        }else{
+            asignarError(inputFecha);
+            contenedorErrores.insertBefore(mensajeErrorFecha,contenedorErrores.firstChild);
+            mensajeErrorFecha.innerHTML = "FECHA NACIMIENTO: Debes separar con guiones '-' o con barras '/', y recuerda que el año debe tener cuatro números";
         }
         
-        if(selectProvincia.value == 0){
-            formularioValido = false;
-            selectProvincia.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorProvincia,contenedorErrores.firstChild);
-            mensajeErrorProvincia.innerHTML = "PROVINCIA: Si pulsas sobre 'Seleccione Provincia' te saldrán opciones a elegir, tienes una de las provincias que te aparecen en la lista";
-            selectProvincia.focus();
-        }else{
+        if(selectProvincia.value != 0){
             selectProvincia.className = '';
             mensajeErrorProvincia.remove();
+        }else{
+            asignarError(selectProvincia);
+            contenedorErrores.insertBefore(mensajeErrorProvincia,contenedorErrores.firstChild);
+            mensajeErrorProvincia.innerHTML = "PROVINCIA: Si pulsas sobre 'Seleccione Provincia' te saldrán opciones a elegir, tienes una de las provincias que te aparecen en la lista";
         }
         
-        if(!comprobarEmail.test(inputEmail.value)){
-            formularioValido = false;
-            inputEmail.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorEmail,contenedorErrores.firstChild);
-            mensajeErrorEmail.innerHTML = "EMAIL: Debes tener e-mail, asegúrate de haber introducido el '@' y el punto ' . '";
-            inputEmail.focus();
-        }else{
+        if(comprobarEmail.test(inputEmail.value)){
             inputEmail.className = '';
             mensajeErrorEmail.remove();
+        }else{
+            asignarError(inputEmail);
+            contenedorErrores.insertBefore(mensajeErrorEmail,contenedorErrores.firstChild);
+            mensajeErrorEmail.innerHTML = "EMAIL: Debes tener e-mail, asegúrate de haber introducido el '@' y el punto ' . '";
         }
         
-        if(!comprobarDni.test(inputDni.value)){
-            formularioValido = false;
-            inputDni.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorDni,contenedorErrores.firstChild);
-            mensajeErrorDni.innerHTML = "DNI: Cuidado porque debes escribir un guión '-' obligatoriamente después de los 8 números y a continuación la letra";
-            inputDni.focus();
-        }else{
+        if(comprobarDni.test(inputDni.value)){
             inputDni.className = '';
             mensajeErrorDni.remove();
+        }else{
+            asignarError(inputDni);
+            contenedorErrores.insertBefore(mensajeErrorDni,contenedorErrores.firstChild);
+            mensajeErrorDni.innerHTML = "DNI: Cuidado porque debes escribir un guión '-' obligatoriamente después de los 8 números y a continuación la letra";
         }
         
-        if(!(comprobarEdad.test(inputEdad.value) && inputEdad.value >= 18 && inputEdad.value <= 105)){
-            formularioValido = false;
-            inputEdad.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorEdad,contenedorErrores.firstChild);
-            mensajeErrorEdad.innerHTML = 'EDAD: Solo se permiten números del 15 al 105, no se pueden escribir letras ni otro tipo de signos';
-            inputEdad.focus();
-        }else{
+        if(comprobarEdad.test(inputEdad.value) && inputEdad.value >= 18 && inputEdad.value <= 105){
             inputEdad.className = '';
             mensajeErrorEdad.remove();
+        }else{
+            asignarError(inputEdad);
+            contenedorErrores.insertBefore(mensajeErrorEdad,contenedorErrores.firstChild);
+            mensajeErrorEdad.innerHTML = 'EDAD: Solo se permiten números del 15 al 105, no se pueden escribir letras ni otro tipo de signos';
         }
         
-        if(!comprobarApellidos.test(inputApellidos.value)){
-            formularioValido = false;
-            inputApellidos.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorApellidos,contenedorErrores.firstChild);
-            mensajeErrorApellidos.innerHTML = "APELLIDOS: Introduce tus apellidos sin tildes y sin 'ñ' ni otros signos";
-            inputApellidos.focus();
-        }else{
+        if(comprobarApellidos.test(inputApellidos.value)){
             inputApellidos.className = '';
             mensajeErrorApellidos.remove();
+        }else{
+            asignarError(inputApellidos);
+            contenedorErrores.insertBefore(mensajeErrorApellidos,contenedorErrores.firstChild);
+            mensajeErrorApellidos.innerHTML = "APELLIDOS: Introduce tus apellidos sin tildes y sin 'ñ' ni otros signos";
         }
         
-        if(!comprobarNombre.test(inputNombre.value)){
-            formularioValido = false;
-            inputNombre.className = 'error';
-            contenedorErrores.insertBefore(mensajeErrorNombre,contenedorErrores.firstChild);
-            mensajeErrorNombre.innerHTML = "NOMBRE: Tu nombre debe ir sin tildes ni 'ñ' ni otros signos";
-            inputNombre.focus();
-        }else{
+        if(comprobarNombre.test(inputNombre.value)){
             inputNombre.className = '';
             mensajeErrorNombre.remove();
+        }else{
+            asignarError(inputNombre);
+            contenedorErrores.insertBefore(mensajeErrorNombre,contenedorErrores.firstChild);
+            mensajeErrorNombre.innerHTML = "NOMBRE: Tu nombre debe ir sin tildes ni 'ñ' ni otros signos";
         }
         
         //Mostrar cookie dentro de un p que está dentro del divIntentos, id='intentos'
@@ -201,6 +184,15 @@ window.onload = function (){
             if(!respuestaConfirmacion){
                 event.preventDefault();
             }
+        }
+    }
+
+    function asignarError(elemento){
+        formularioValido = false;
+        elemento.className = CLASEERROR;
+        //A provincia no le ponemos foco ya que es un select
+        if(elemento != selectProvincia){
+            elemento.focus();
         }
     }
     

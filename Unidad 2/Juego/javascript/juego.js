@@ -5,6 +5,7 @@ window.onload = function() {
 	const ARRAYPOKEMON = [];
 	const ARRAYATAQUES = [];
 	let cont = 0, numeroAleatorioIA;
+	let puedoAtacar = true;
 	
 	const VELOCIDADPIKACHU = 3, VELOCIDADRAICHU = 5;
 	
@@ -15,7 +16,7 @@ window.onload = function() {
 	var id;      // id de la animación
 	
 	let xIzquierda, xDerecha, xIzquierdaMaquina, xDerechaMaquina;
-	const TOPEDERECHA = 460, TOPEIZQUIERDA = 0;
+	const TOPEDERECHA = 460, TOPEIZQUIERDA = 0, TOPEARRIBA = 0, TOPEABAJO = 500;
 	
 	
 	var animacionComecocos = [[0,0],[32,0],[0,65],[32,65]]; // Posiciones del sprite donde recortar cada imagenn 
@@ -53,8 +54,6 @@ window.onload = function() {
 		this.lanzarAtaque = function(){
 			let rayoDeLaMuerte = new Ataque(this.x + 10,this.y,9,imagenRayoPikachu,0,0,35,80,20,45,35,0);
 			ARRAYATAQUES.push(rayoDeLaMuerte);
-			console.log(this.x);
-			console.log(this.y);
 		}
 	}
 
@@ -227,9 +226,9 @@ window.onload = function() {
 				desactivarDerecha();
 			break;
 
-			/*case 32:
-				ARRAYPOKEMON[0].lanzarAtaque();
-			break;*/
+			case 32:
+				puedoAtacar = true;
+			break;
 					
 			default:
 
@@ -237,22 +236,33 @@ window.onload = function() {
 	}
 		
 	function activarAtaque(event){
-		switch (event.keyCode){
-			case 32:
-				ARRAYPOKEMON[0].lanzarAtaque();
-			break;
+		if(puedoAtacar){
+			switch (event.keyCode){
+				case 32:
+					ARRAYPOKEMON[0].lanzarAtaque();
+					puedoAtacar = false;
+				break;
+			}
 		}
 	}
 
 	function movimientoIA(){
+		console.log('Cantidad de ataques en pantalla: ' + ARRAYATAQUES.length);
 		numeroAleatorioIA = Math.round(Math.random());
-		console.log(numeroAleatorioIA);
 		if(numeroAleatorioIA == 0){
 			xDerechaMaquina = true;
 			xIzquierdaMaquina = false;
 		}else{
 			xDerechaMaquina = false;
 			xIzquierdaMaquina = true;
+		}
+	}
+
+	function eliminarObjetosBatalla(){
+		for(i in ARRAYATAQUES){
+			if((ARRAYATAQUES[i].y < TOPEARRIBA - 35) || ARRAYATAQUES[i].y > TOPEABAJO){
+				ARRAYATAQUES.splice(i,1);
+			}
 		}
 	}
 		
@@ -288,6 +298,8 @@ window.onload = function() {
 	// Animación encargada de abrir y cerra la boca
 	id = setInterval(generarPosiciones, 1000/100);
 
-	/*setInterval(movimientoIA, 1000/3);*/
+	setInterval(movimientoIA, 1000/3);
+
+	setInterval(eliminarObjetosBatalla, 1000/5);
 }
 
