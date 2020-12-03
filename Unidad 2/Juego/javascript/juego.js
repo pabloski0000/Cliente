@@ -72,9 +72,9 @@ window.onload = function() {
 
 	Pokemon.prototype.morir = function(){
 		if(this.controladoPorJugador){
-			console.log('Ha ganado la IA');
+			//console.log('Ha ganado la IA');
 		}else{
-			console.log('Ha ganado el jugador 1');
+			//console.log('Ha ganado el jugador 1');
 		}
 	}
 
@@ -90,14 +90,23 @@ window.onload = function() {
 						this.morir();
 					}
 					setTimeout(desaparecerExplosion, 1500);
-					console.log('Cantidad de vida que me falta: ' + this.vida);
 				}
 			}
 		}
 	}
 
 	ObjetoBatalla.prototype.generaPosicionArriba = function() {
-		this.y = this.y - this.velocidad;	
+		this.y = this.y - this.velocidad;
+
+		/*for(i in ARRAYPOKEMON){
+			if(this.lanzadoPorJugador == ARRAYPOKEMON[i].controladoPorJugador){
+				if(this.x < ARRAYPOKEMON[i].x){
+					this.x += (ARRAYPOKEMON[i].x - this.x) * (ARRAYPOKEMON[i].x - this.x) / 100;
+				}else if(this.x > ARRAYPOKEMON[i].x){
+					this.x -= (this.x -ARRAYPOKEMON[i].x) * (this.x - ARRAYPOKEMON[i].x) / 100;
+				}
+			}
+		}*/
 	}
 
 	ObjetoBatalla.prototype.generaPosicionAbajo = function() {
@@ -305,9 +314,41 @@ window.onload = function() {
 	function desaparecerExplosion(){
 		ARRAYEXPLOSIONES.splice(0,1);
 	}
+	function prueba(){
+	Pokemon.prototype.esquivarAtaqueIA = function(){
+		for(i in ARRAYATAQUES){
+			if(ARRAYATAQUES[i].lanzadoPorJugador != this.controladoPorJugador){
+				if((this.x + 40) > ARRAYATAQUES[i].x && this.x < ARRAYATAQUES[i].x){
+					if((this.x + 40 - ARRAYATAQUES[i].x) < (ARRAYATAQUES[i].x - this.x)){
+						xDerechaMaquina = false;
+						xIzquierdaMaquina = true;
+					}else{
+						xDerechaMaquina = true;
+						xIzquierdaMaquina = false;
+					}
+				}
+			}
+		}
+	}
+	}
 
 	function movimientoIA(){
-		console.log('Cantidad de ataques en pantalla: ' + ARRAYATAQUES.length);
+		if(ARRAYPOKEMON[1].x < ARRAYPOKEMON[0].x - 300){
+			console.log('ir a la derecha');
+			xDerechaMaquina = true;
+			xIzquierdaMaquina = false;
+		}else if(ARRAYPOKEMON[1].x > ARRAYPOKEMON[0].x + 300){
+			console.log('ir a la izquierda');
+			xDerechaMaquina = false;
+			xIzquierdaMaquina = true;
+		}else{
+			movimientoAleatorio();
+		}
+
+		ARRAYPOKEMON[1].esquivarAtaqueIA();
+	}
+
+	function movimientoAleatorio(){
 		numeroAleatorioIA = Math.round(Math.random());
 		if(numeroAleatorioIA == 0){
 			xDerechaMaquina = true;
