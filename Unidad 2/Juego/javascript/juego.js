@@ -13,7 +13,7 @@ window.onload = function() {
 	let puedoAtacar = true;
 	let imagenExplosion;
 	const VELOCIDADEXPLOSION = 0;
-	
+	let randomOIA;
 	const VIDAPIKACHU = 2000;
 	const VELOCIDADPIKACHU = 3, VELOCIDADRAICHU = 5;
 	
@@ -34,31 +34,59 @@ window.onload = function() {
 
 	let imagenPikachu, imagenRayoPikachu;
 
-	function ObjetoBatalla(x_, y_,velocidad,imagen,posicionImagenX,posicionImagenY,anchoDibujo,altoDibujo,anchoImagen,altoImagen){
+	function ObjetoBatalla(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen){
 		this.x = x_;
 		this.y = y_;
 		this.velocidad = velocidad;
-		this.arrayImagenes = [[posicionImagenX,posicionImagenY]];
+		this.arrayBidimensionalPosiciones = arrayBidimensionalPosiciones;
 		this.imagen = imagen;
-		this.anchoDibujo = anchoDibujo;
-		this.altoDibujo = altoDibujo;
+		this.arrayBidimensionalDimensionesDibujo = arrayBidimensionalDimensionesDibujo;
 		this.anchoImagen = anchoImagen;
 		this.altoImagen = altoImagen;
+		this.posicion = 0;
+	}
+
+	function Explosion(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen){
+		this.base = ObjetoBatalla;
+		this.base(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen);
+
+		
+		this.animacionExplosion = async function(aumentarPosicion){
+			
+			if(aumentarPosicion){
+				++this.posicion;
+			}
+			
+			if(this.posicion == this.arrayBidimensionalPosiciones.length){
+				this.desaparecerExplosion();
+			}
+			
+			await sleep(100);
+
+			return this.animacionExplosion(true);
+		}
+	}
+	
+	Explosion.prototype = new ObjetoBatalla();
+	
+	Explosion.prototype.desaparecerExplosion = function(){
+		console.log('Antes: ' + ARRAYEXPLOSIONES.length);
+		ARRAYEXPLOSIONES.splice(0,1);
+		console.log('Después: ' + ARRAYEXPLOSIONES.length);
 	}
 	
 	//La variable pokemonDeUsuario será booleana
-	function Ataque(x_, y_,velocidad,imagen,posicionEnDibujoX,posicionEnDibujoY,anchoDibujo,altoDibujo,anchoImagen,altoImagen,posicionImagenX2,posicionImagenY2,lanzadoPorJugador){
+	function Ataque(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen,lanzadoPorJugador){
 		this.base = ObjetoBatalla;
-		this.base(x_,y_,velocidad,imagen,posicionEnDibujoX,posicionEnDibujoY,anchoDibujo,altoDibujo,anchoImagen,altoImagen);
-		this.arrayImagenes.push([posicionImagenX2,posicionImagenY2]);
+		this.base(x_,y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen);
 		this.lanzadoPorJugador = lanzadoPorJugador;
 	}
 
 	Ataque.prototype = new ObjetoBatalla();
 
-	function Pokemon(x_, y_,velocidad,imagen,posicionEnDibujoX,posicionEnDibujoY,anchoDibujo,altoDibujo,anchoImagen,altoImagen,vida,controladoPorJugador){
+	function Pokemon(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen,vida,controladoPorJugador){
 		this.base = ObjetoBatalla;
-		this.base(x_, y_,velocidad,imagen,posicionEnDibujoX,posicionEnDibujoY,anchoDibujo,altoDibujo,anchoImagen,altoImagen);
+		this.base(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen);
 		this.vida = vida;
 		this.controladoPorJugador = controladoPorJugador;
 	}
@@ -66,7 +94,10 @@ window.onload = function() {
 	Pokemon.prototype = new ObjetoBatalla();
 	
 	Pokemon.prototype.lanzarAtaque = function(){
-		let rayoDeLaMuerte = new Ataque(this.x + 10,this.y,9,imagenRayoPikachu,0,0,35,80,20,45,35,0,this.controladoPorJugador);
+		let rayoDeLaMuerte = new Ataque(this.x + 10,this.y,9,imagenRayoPikachu,[[0,0],[35,0]],[[35,80],[35,80]],20,45,this.controladoPorJugador);
+		if(!rayoDeLaMuerte.lanzadoPorJugador){
+			rayoDeLaMuerte.posicion = 1;
+		}
 		ARRAYATAQUES.push(rayoDeLaMuerte);
 	}
 
@@ -81,15 +112,15 @@ window.onload = function() {
 	Pokemon.prototype.atacado = function(){
 		for(i in ARRAYATAQUES){
 			if(!(ARRAYATAQUES[i].lanzadoPorJugador == this.controladoPorJugador)){
-				if((ARRAYATAQUES[i].x > this.x) && (ARRAYATAQUES[i].x < this.x + this.anchoImagen) && (ARRAYATAQUES[i].y > this.y) && (ARRAYATAQUES[i].y < this.y + this.altoImagen)){
-					let explosion = new ObjetoBatalla(ARRAYATAQUES[i].x, ARRAYATAQUES[i].y, VELOCIDADEXPLOSION, imagenExplosion, 0, 0, 85, 85, 85, 85);
+				if((ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen >= this.x) && (ARRAYATAQUES[i].x < this.x + this.anchoImagen) && (ARRAYATAQUES[i].y > this.y) && (ARRAYATAQUES[i].y <= this.y + this.altoImagen)){
+					let explosion = new Explosion(ARRAYATAQUES[i].x, ARRAYATAQUES[i].y, VELOCIDADEXPLOSION, imagenExplosion,[[63,1662],[24,1431],[18,1116],[0,797],[1,464],[16,189],[48,0]], [[245, 264],[245, 230],[245, 264],[245, 264],[245, 274],[245, 264],[245, 190]], 85, 85);
 					ARRAYEXPLOSIONES.push(explosion);
+					ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(false);
 					ARRAYATAQUES.splice(i,1);
 					this.vida -= 100;
 					if(this.vida <= 0){
 						this.morir();
 					}
-					setTimeout(desaparecerExplosion, 1500);
 				}
 			}
 		}
@@ -139,21 +170,15 @@ window.onload = function() {
 	}
 	
 	ObjetoBatalla.prototype.pintarObjeto = function(){
-		if((this instanceof Ataque) && !(this.lanzadoPorJugador)){
-			posicion = 1;
-		}
-
 		ctx.drawImage(this.imagen, // Imagen completa con todos los comecocos (Sprite)
-		this.arrayImagenes[posicion][0],    // Posicion X del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
-		this.arrayImagenes[posicion][1],	  // Posicion Y del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
-		this.anchoDibujo, 		  // Tamaño X del comecocos que voy a recortar para dibujar
-		this.altoDibujo,	      // Tamaño Y del comecocos que voy a recortar para dibujar
+		this.arrayBidimensionalPosiciones[this.posicion][0],    // Posicion X del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
+		this.arrayBidimensionalPosiciones[this.posicion][1],	  // Posicion Y del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
+		this.arrayBidimensionalDimensionesDibujo[this.posicion][0], 		  // Tamaño X del comecocos que voy a recortar para dibujar
+		this.arrayBidimensionalDimensionesDibujo[this.posicion][1],	      // Tamaño Y del comecocos que voy a recortar para dibujar
 		this.x,      // Posicion x de pantalla donde voy a dibujar el comecocos recortado
 		this.y,				  // Posicion y de pantalla donde voy a dibujar el comecocos recortado
 		this.anchoImagen,		  // Tamaño X del comecocos que voy a dibujar
 		this.altoImagen);       // Tamaño Y del comecocos que voy a dibujar
-		
-		posicion = 0;
 	}
 	
 	function pintaRectangulo() {
@@ -171,6 +196,7 @@ window.onload = function() {
 			ARRAYATAQUES[i].pintarObjeto();
 		}
 
+		/*console.log(ARRAYEXPLOSIONES.length);*/
 		for(i in ARRAYEXPLOSIONES){
 			ARRAYEXPLOSIONES[i].pintarObjeto();
 		}
@@ -311,15 +337,11 @@ window.onload = function() {
 		}
 	}
 
-	function desaparecerExplosion(){
-		ARRAYEXPLOSIONES.splice(0,1);
-	}
-	function prueba(){
 	Pokemon.prototype.esquivarAtaqueIA = function(){
 		for(i in ARRAYATAQUES){
 			if(ARRAYATAQUES[i].lanzadoPorJugador != this.controladoPorJugador){
-				if((this.x + 40) > ARRAYATAQUES[i].x && this.x < ARRAYATAQUES[i].x){
-					if((this.x + 40 - ARRAYATAQUES[i].x) < (ARRAYATAQUES[i].x - this.x)){
+				if((this.x + this.anchoImagen) > ARRAYATAQUES[i].x && this.x < ARRAYATAQUES[i].x){
+					if((this.x + 40 - ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen / 2) < (ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen / 2 - this.x)){
 						xDerechaMaquina = false;
 						xIzquierdaMaquina = true;
 					}else{
@@ -330,22 +352,33 @@ window.onload = function() {
 			}
 		}
 	}
-	}
 
 	function movimientoIA(){
-		if(ARRAYPOKEMON[1].x < ARRAYPOKEMON[0].x - 300){
-			console.log('ir a la derecha');
-			xDerechaMaquina = true;
-			xIzquierdaMaquina = false;
-		}else if(ARRAYPOKEMON[1].x > ARRAYPOKEMON[0].x + 300){
-			console.log('ir a la izquierda');
-			xDerechaMaquina = false;
-			xIzquierdaMaquina = true;
-		}else{
-			movimientoAleatorio();
+		randomOIA = Math.round(Math.random() * 1);
+
+		switch(randomOIA){
+			case 0:
+				movimientoAleatorio();
+			break;
+				
+			case 1:
+				if(ARRAYPOKEMON[1].x < ARRAYPOKEMON[0].x){
+					console.log('ir a la derecha');
+					xDerechaMaquina = true;
+					xIzquierdaMaquina = false;
+				}else if(ARRAYPOKEMON[1].x > ARRAYPOKEMON[0].x){
+					console.log('ir a la izquierda');
+					xDerechaMaquina = false;
+					xIzquierdaMaquina = true;
+				}
+			break;
+
+			default:
+
 		}
 
-		ARRAYPOKEMON[1].esquivarAtaqueIA();
+
+
 	}
 
 	function movimientoAleatorio(){
@@ -386,6 +419,10 @@ window.onload = function() {
 			divVidaMaquina.innerHTML = ARRAYPOKEMON[1].vida;
 		}
 	}
+
+	function sleep(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
 		
 	document.addEventListener("keydown", activaFuncionalidad, false);
 	document.addEventListener("keyup", desactivaFuncionalidad, false);
@@ -402,16 +439,16 @@ window.onload = function() {
 	imagenRayoPikachu = new Image();
 	imagenRayoPikachu.src = '../css/imagenes/Prototipo-ataque-pikachu_pasado-por-photoshop.png';
 	imagenExplosion = new Image();
-	imagenExplosion.src = '../css/imagenes/Explosion.png';
+	imagenExplosion.src = '../css/imagenes/explosiones.png';
 	
 	
 	if(true){
-		let pikachuJugador = new Pokemon(Math.random() * 460, YJUGADOR, VELOCIDADPIKACHU,imagenPikachu,205,205,40,40,40,40,VIDAPIKACHU,true);
+		let pikachuJugador = new Pokemon(Math.random() * 460, YJUGADOR, VELOCIDADPIKACHU,imagenPikachu,[[205,205]],[[40,40]],40,40,VIDAPIKACHU,true);
 		ARRAYPOKEMON.push(pikachuJugador);
 	}
 	
 	if(true){
-		let pikachuIA = new Pokemon(Math.random() * 460, YMAQUINA, VELOCIDADPIKACHU,imagenPikachu,10,20,40,40,40,40,VIDAPIKACHU,false);
+		let pikachuIA = new Pokemon(Math.random() * 460, YMAQUINA, VELOCIDADPIKACHU,imagenPikachu,[[10,20]],[[40,40]],40,40,VIDAPIKACHU,false);
 		ARRAYPOKEMON.push(pikachuIA);
 	}
 
