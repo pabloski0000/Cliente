@@ -1,6 +1,7 @@
 window.onload = function() {
 	const divVidaMaquina = document.getElementById('vidaMaquina');
 	const divVidaJugador = document.getElementById('vidaJugador');
+	const audioDisparo = document.getElementById('audioDisparo');
 	let auxVidaJugador = 2000, auxVidaMaquina = 2000;
 	const posicionEnArrayExplosion = [];
 	let c = 0;
@@ -99,6 +100,10 @@ window.onload = function() {
 			rayoDeLaMuerte.posicion = 1;
 		}
 		ARRAYATAQUES.push(rayoDeLaMuerte);
+		if(this.controladoPorJugador){
+			audioDisparo.currentTime = 0.1;
+			audioDisparo.play();
+		}
 	}
 
 	Pokemon.prototype.morir = function(){
