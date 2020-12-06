@@ -12,11 +12,11 @@ window.onload = function() {
 	let cont = 0, numeroAleatorioIA;
 	let puedoAtacar = true;
 	let imagenExplosion;
-	const VELOCIDADEXPLOSION = 0;
 	let randomOIA;
 	const VIDAPIKACHU = 2000;
+	const VELOCIDADEXPLOSION = 0;
 	const VELOCIDADPIKACHU = 3, VELOCIDADRAICHU = 5;
-	
+	const VELOCIDADATAQUERAYODELAMUERTE = 9;
 	const YMAQUINA = 35;
 	const YJUGADOR = 425;   // posición inicial y del rectángulo
 	let canvas;  // variable que referencia al elemento canvas del html
@@ -94,7 +94,7 @@ window.onload = function() {
 	Pokemon.prototype = new ObjetoBatalla();
 	
 	Pokemon.prototype.lanzarAtaque = function(){
-		let rayoDeLaMuerte = new Ataque(this.x + 10,this.y,9,imagenRayoPikachu,[[0,0],[35,0]],[[35,80],[35,80]],20,45,this.controladoPorJugador);
+		let rayoDeLaMuerte = new Ataque(this.x + 10,this.y,VELOCIDADATAQUERAYODELAMUERTE,imagenRayoPikachu,[[0,1],[35,0]],[[36,80],[35,80]],20,45,this.controladoPorJugador);
 		if(!rayoDeLaMuerte.lanzadoPorJugador){
 			rayoDeLaMuerte.posicion = 1;
 		}
@@ -112,14 +112,31 @@ window.onload = function() {
 	Pokemon.prototype.atacado = function(){
 		for(i in ARRAYATAQUES){
 			if(!(ARRAYATAQUES[i].lanzadoPorJugador == this.controladoPorJugador)){
-				if((ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen >= this.x) && (ARRAYATAQUES[i].x < this.x + this.anchoImagen) && (ARRAYATAQUES[i].y > this.y) && (ARRAYATAQUES[i].y <= this.y + this.altoImagen)){
-					let explosion = new Explosion(ARRAYATAQUES[i].x, ARRAYATAQUES[i].y, VELOCIDADEXPLOSION, imagenExplosion,[[63,1662],[24,1431],[18,1116],[0,797],[1,464],[16,189],[48,0]], [[245, 264],[245, 230],[245, 264],[245, 264],[245, 274],[245, 264],[245, 190]], 85, 85);
-					ARRAYEXPLOSIONES.push(explosion);
-					ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(false);
-					ARRAYATAQUES.splice(i,1);
-					this.vida -= 100;
-					if(this.vida <= 0){
-						this.morir();
+				if(this.controladoPorJugador){
+					if(ARRAYATAQUES[i].y + ARRAYATAQUES[i].altoImagen >= this.y){
+						if(ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen >= this.x && ARRAYATAQUES[i].x <= this.x + this.anchoImagen){
+							let explosion = new Explosion(ARRAYATAQUES[i].x, ARRAYATAQUES[i].y, VELOCIDADEXPLOSION, imagenExplosion,[[63,1662],[24,1431],[18,1116],[0,797],[1,464],[16,189],[48,0]], [[245, 264],[245, 230],[245, 264],[245, 264],[245, 274],[245, 264],[245, 190]], 85, 85);
+							ARRAYEXPLOSIONES.push(explosion);
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(false);
+							ARRAYATAQUES.splice(i,1);
+							this.vida -= 100;
+							if(this.vida <= 0){
+								this.morir();
+							}
+						}
+					}
+				}else{
+					if(ARRAYATAQUES[i].y <= this.y + this.altoImagen){
+						if((ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen >= this.x) && (ARRAYATAQUES[i].x <= this.x + this.anchoImagen)){
+							let explosion = new Explosion(ARRAYATAQUES[i].x, ARRAYATAQUES[i].y, VELOCIDADEXPLOSION, imagenExplosion,[[63,1662],[24,1431],[18,1116],[0,797],[1,464],[16,189],[48,0]], [[245, 264],[245, 230],[245, 264],[245, 264],[245, 274],[245, 264],[245, 190]], 85, 85);
+							ARRAYEXPLOSIONES.push(explosion);
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(false);
+							ARRAYATAQUES.splice(i,1);
+							this.vida -= 100;
+							if(this.vida <= 0){
+								this.morir();
+							}
+						}
 					}
 				}
 			}
@@ -435,7 +452,7 @@ window.onload = function() {
 	ctx = canvas.getContext("2d");
 	
 	imagenPikachu = new Image();
-	imagenPikachu.src="../css/imagenes/sprites de prueba de pikachu.png";
+	imagenPikachu.src="../css/imagenes/sprites-pikachu.png";
 	imagenRayoPikachu = new Image();
 	imagenRayoPikachu.src = '../css/imagenes/Prototipo-ataque-pikachu_pasado-por-photoshop.png';
 	imagenExplosion = new Image();
@@ -443,12 +460,12 @@ window.onload = function() {
 	
 	
 	if(true){
-		let pikachuJugador = new Pokemon(Math.random() * 460, YJUGADOR, VELOCIDADPIKACHU,imagenPikachu,[[205,205]],[[40,40]],40,40,VIDAPIKACHU,true);
+		let pikachuJugador = new Pokemon(Math.random() * 460, YJUGADOR, VELOCIDADPIKACHU,imagenPikachu,[[0,555]],[[100,130]],40,50,VIDAPIKACHU,true);
 		ARRAYPOKEMON.push(pikachuJugador);
 	}
 	
 	if(true){
-		let pikachuIA = new Pokemon(Math.random() * 460, YMAQUINA, VELOCIDADPIKACHU,imagenPikachu,[[10,20]],[[40,40]],40,40,VIDAPIKACHU,false);
+		let pikachuIA = new Pokemon(Math.random() * 460, YMAQUINA, VELOCIDADPIKACHU,imagenPikachu,[[0,-19]],[[100,130]],40,50,VIDAPIKACHU,false);
 		ARRAYPOKEMON.push(pikachuIA);
 	}
 
@@ -458,7 +475,7 @@ window.onload = function() {
 	// Animación encargada de abrir y cerra la boca
 	id = setInterval(generarPosiciones, 1000/100);
 
-	setInterval(movimientoIA, 1000/4);
+	//setInterval(movimientoIA, 1000/4);
 
 	setInterval(eliminarAtaqueDelArray, 1000/5);
 
