@@ -2,6 +2,7 @@ window.onload = function() {
 	const divVidaMaquina = document.getElementById('vidaMaquina');
 	const divVidaJugador = document.getElementById('vidaJugador');
 	const audioDisparo = document.getElementById('audioDisparo');
+	const ANCHOCANVAS = 500, ALTOCANVAS = 500;
 	let auxVidaJugador = 2000, auxVidaMaquina = 2000;
 	const posicionEnArrayExplosion = [];
 	let c = 0;
@@ -11,10 +12,10 @@ window.onload = function() {
 	const ARRAYATAQUES = [];
 	const ARRAYEXPLOSIONES = [];
 	let cont = 0, numeroAleatorioIA;
-	let puedoAtacar = true;
+	let puedoAtacar = true, permisoDispararIA = true;
 	let imagenExplosion;
 	let randomOIA;
-	const VIDAPIKACHU = 2000;
+	const VIDAPIKACHU = 2000, VIDASOLDADO = 3000;
 	const VELOCIDADEXPLOSION = 0;
 	const VELOCIDADPIKACHU = 3, VELOCIDADRAICHU = 5;
 	const VELOCIDADATAQUERAYODELAMUERTE = 9;
@@ -23,17 +24,19 @@ window.onload = function() {
 	let canvas;  // variable que referencia al elemento canvas del html
 	let ctx;     // contexto de trabajo
 	var id;      // id de la animación
-	
+	let sumarY = 0;
+	let eleccionPersonaje;
 	let xIzquierda, xDerecha, xIzquierdaMaquina, xDerechaMaquina;
-	const TOPEDERECHA = 460, TOPEIZQUIERDA = 0, TOPEARRIBA = 0, TOPEABAJO = 500;
+	const TOPEDERECHA = 500, TOPEIZQUIERDA = 0, TOPEARRIBA = 0, TOPEABAJO = 500;
 	
+	eleccionPersonaje = parseInt(prompt('Personaje a elegir:'));
 	
 	var animacionComecocos = [[0,0],[32,0],[0,65],[32,65]]; // Posiciones del sprite donde recortar cada imagenn 
 	//(0 cerrado derecha, 1 abierto derecha, 2 cerrado izquierda, 3 cerrado izquierda)
 	/* provisional -> */ let posicion = 0;                                         // Posición del array 0, 1, 2, 3
 	var ejecutarDerecha = true, ejecutarIzquierda = false;  // Control de cambio de posicion derecha - izquierda y viceversa
 
-	let imagenPikachu, imagenRayoPikachu;
+	let imagenPikachu, imagenRayoPikachu, imagenSoldado;
 
 	function ObjetoBatalla(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen){
 		this.x = x_;
@@ -47,11 +50,20 @@ window.onload = function() {
 		this.posicion = 0;
 	}
 
+	ObjetoBatalla.prototype.animacionGenerica = async function(posicionEmpezarAnimacion, posicionTerminarAnimacion, milisegundosEntreFrames){
+		if(posicionEmpezarAnimacion <= posicionTerminarAnimacion){
+			this.posicion = posicionEmpezarAnimacion;
+			console.log('Controlado por jugador: ' + this.controladoPorJugador + ' y ' + this.posicion);
+			await sleep(milisegundosEntreFrames);
+			return this.animacionGenerica(this.posicion + 1,milisegundosEntreFrames);
+		}
+	}
+
 	function Explosion(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen){
 		this.base = ObjetoBatalla;
 		this.base(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen);
 
-		
+		//Es asíncrona por la necesidad de ejecutar la función sleep para cada objeto por separado
 		this.animacionExplosion = async function(aumentarPosicion){
 			
 			if(aumentarPosicion){
@@ -95,15 +107,23 @@ window.onload = function() {
 	Pokemon.prototype = new ObjetoBatalla();
 	
 	Pokemon.prototype.lanzarAtaque = function(){
-		let rayoDeLaMuerte = new Ataque(this.x + 10,this.y,VELOCIDADATAQUERAYODELAMUERTE,imagenRayoPikachu,[[0,1],[35,0]],[[36,80],[35,80]],20,45,this.controladoPorJugador);
+		if(!this.controladoPorJugador){
+			this.animacionGenerica(0, 1, 200);
+		}else{
+			//Nada de momento
+		}
+		sumarY = this.altoImagen;
+		if(this.controladoPorJugador){
+			sumarY = -sumarY;
+		}
+
+		let rayoDeLaMuerte = new Ataque(this.x + 10,this.y + sumarY,VELOCIDADATAQUERAYODELAMUERTE,imagenRayoPikachu,[[0,1],[35,0]],[[36,80],[35,80]],20,45,this.controladoPorJugador);
 		if(!rayoDeLaMuerte.lanzadoPorJugador){
 			rayoDeLaMuerte.posicion = 1;
 		}
 		ARRAYATAQUES.push(rayoDeLaMuerte);
-		if(this.controladoPorJugador){
-			audioDisparo.currentTime = 0.1;
-			audioDisparo.play();
-		}
+		audioDisparo.currentTime = 0.05;
+		audioDisparo.play();
 	}
 
 	Pokemon.prototype.morir = function(){
@@ -170,10 +190,10 @@ window.onload = function() {
 		
 		this.x = this.x + this.velocidad;
 		
-		if (this.x > TOPEDERECHA) {
+		if (this.x + this.anchoImagen >= TOPEDERECHA) {
 			
 			// If at edge, reset ship position and set flag.
-			this.x = TOPEDERECHA;   
+			this.x = TOPEDERECHA - this.anchoImagen;   
 		}		
 		
 	}
@@ -206,8 +226,7 @@ window.onload = function() {
 	function pintaRectangulo() {
 		
 		// borramos el canvas
-		ctx.clearRect(0, 0, 500, 500);
-        
+		ctx.clearRect(0, 0, ANCHOCANVAS, ALTOCANVAS);
 		
 		
 		// Pintamos a Pokemon
@@ -359,7 +378,7 @@ window.onload = function() {
 		}
 	}
 
-	Pokemon.prototype.esquivarAtaqueIA = function(){
+	Pokemon.prototype.esquivarAtaque = function(){
 		for(i in ARRAYATAQUES){
 			if(ARRAYATAQUES[i].lanzadoPorJugador != this.controladoPorJugador){
 				if((this.x + this.anchoImagen) > ARRAYATAQUES[i].x && this.x < ARRAYATAQUES[i].x){
@@ -375,6 +394,15 @@ window.onload = function() {
 		}
 	}
 
+	Pokemon.prototype.permisoDisparar = function(){
+		if(Math.abs((this.x + this.anchoImagen) - (ARRAYPOKEMON[0].x + ARRAYPOKEMON[0].anchoImagen)) <= ANCHOCANVAS / 4){
+			console.log(ANCHOCANVAS);
+			permisoDispararIA = true;
+		}else{
+			permisoDispararIA = false;
+		}
+	}
+
 	function movimientoIA(){
 		randomOIA = Math.round(Math.random() * 1);
 
@@ -385,11 +413,9 @@ window.onload = function() {
 				
 			case 1:
 				if(ARRAYPOKEMON[1].x < ARRAYPOKEMON[0].x){
-					console.log('ir a la derecha');
 					xDerechaMaquina = true;
 					xIzquierdaMaquina = false;
 				}else if(ARRAYPOKEMON[1].x > ARRAYPOKEMON[0].x){
-					console.log('ir a la izquierda');
 					xDerechaMaquina = false;
 					xIzquierdaMaquina = true;
 				}
@@ -398,8 +424,6 @@ window.onload = function() {
 			default:
 
 		}
-
-
 
 	}
 
@@ -415,7 +439,9 @@ window.onload = function() {
 	}
 
 	function disparoMaquina(){
-		ARRAYPOKEMON[1].lanzarAtaque();
+		if(permisoDispararIA){
+			ARRAYPOKEMON[1].lanzarAtaque();
+		}
 	}
 
 	function comprobarAtaques(){
@@ -458,21 +484,43 @@ window.onload = function() {
 	
 	imagenPikachu = new Image();
 	imagenPikachu.src="../css/imagenes/sprites-pikachu.png";
+	imagenSoldado = new Image();
+	imagenSoldado.src = "../css/imagenes/animacion_soldado.png";
 	imagenRayoPikachu = new Image();
 	imagenRayoPikachu.src = '../css/imagenes/Prototipo-ataque-pikachu_pasado-por-photoshop.png';
 	imagenExplosion = new Image();
 	imagenExplosion.src = '../css/imagenes/explosiones.png';
 	
-	
 	if(true){
 		let pikachuJugador = new Pokemon(Math.random() * 460, YJUGADOR, VELOCIDADPIKACHU,imagenPikachu,[[0,555]],[[100,130]],40,50,VIDAPIKACHU,true);
 		ARRAYPOKEMON.push(pikachuJugador);
+		divVidaJugador.innerHTML = ARRAYPOKEMON[0].vida;
 	}
+
+
+	switch (eleccionPersonaje) {
+		case 1:
+			break;
+
+		case 2:
+			let pikachuIA = new Pokemon(Math.random() * 460, YMAQUINA, VELOCIDADPIKACHU,imagenPikachu,[[0,-19]],[[100,130]],40,50,VIDAPIKACHU,false);
+			ARRAYPOKEMON.push(pikachuIA);
+			divVidaMaquina.innerHTML = ARRAYPOKEMON[1].vida;
+			break;
+			
+		case 3:
+			//Posiciones para ataque: 0 a 1;
+			let soldadoIA = new Pokemon(Math.random() * 460, YMAQUINA, VELOCIDADPIKACHU,imagenSoldado,[[49,575],[49,742],[487,575],[650,575],[815,575]],[[100,147],[100,147],[100,147],[100,147],[100,147]],40,50,VIDASOLDADO,false);
+			ARRAYPOKEMON.push(soldadoIA);
+			divVidaMaquina.innerHTML = ARRAYPOKEMON[1].vida;
+			break;
 	
-	if(true){
-		let pikachuIA = new Pokemon(Math.random() * 460, YMAQUINA, VELOCIDADPIKACHU,imagenPikachu,[[0,-19]],[[100,130]],40,50,VIDAPIKACHU,false);
-		ARRAYPOKEMON.push(pikachuIA);
+		default:
+			break;
 	}
+
+	
+
 
 	// Lanzamos la animación
 	id= setInterval(pintaRectangulo, 1000/100);
@@ -480,14 +528,16 @@ window.onload = function() {
 	// Animación encargada de abrir y cerra la boca
 	id = setInterval(generarPosiciones, 1000/100);
 
-	//setInterval(movimientoIA, 1000/4);
+	setInterval(movimientoIA, 1000/4);
 
 	setInterval(eliminarAtaqueDelArray, 1000/5);
 
+	setInterval(function(){ ARRAYPOKEMON[1].permisoDisparar(); }, 1000/10);
+
+	setInterval(disparoMaquina, 1000/8);
+	
 	setInterval(comprobarAtaques, 1000/200);
-
-	setInterval(disparoMaquina, 1000/5);
-
+	
 	setInterval(actualizarVidaEnPantalla, 500);
 }
 
