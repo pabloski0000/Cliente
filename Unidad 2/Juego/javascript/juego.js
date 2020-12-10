@@ -2,6 +2,7 @@ window.onload = function() {
 	const divVidaMaquina = document.getElementById('vidaMaquina');
 	const divVidaJugador = document.getElementById('vidaJugador');
 	const audioDisparo = document.getElementById('audioDisparo');
+	const audioExplosion = document.getElementById('audioExplosion');
 	const ANCHOCANVAS = 500, ALTOCANVAS = 500;
 	let auxVidaJugador = 2000, auxVidaMaquina = 2000;
 	const posicionEnArrayExplosion = [];
@@ -55,17 +56,30 @@ window.onload = function() {
 			this.posicion = posicionEmpezarAnimacion;
 			console.log('Controlado por jugador: ' + this.controladoPorJugador + ' y ' + this.posicion);
 			await sleep(milisegundosEntreFrames);
-			return this.animacionGenerica(this.posicion + 1,milisegundosEntreFrames);
+			return this.animacionGenerica(this.posicion + 1, posicionTerminarAnimacion, milisegundosEntreFrames);
 		}
 	}
 
 	function Explosion(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen){
 		this.base = ObjetoBatalla;
 		this.base(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen);
+		this.audio = audioExplosion;
 
 		//Es asíncrona por la necesidad de ejecutar la función sleep para cada objeto por separado
-		this.animacionExplosion = async function(aumentarPosicion){
-			
+		this.animacionExplosion = async function(posicionEmpezarAnimacion, posicionTerminarAnimacion, milisegundosEntreFrames){
+			if(posicionEmpezarAnimacion <= posicionTerminarAnimacion){
+				this.posicion = posicionEmpezarAnimacion;
+				await sleep(milisegundosEntreFrames);
+				return this.animacionExplosion(this.posicion + 1, posicionTerminarAnimacion, milisegundosEntreFrames);
+			}else{
+				this.desaparecerExplosion();
+			}
+	
+			/*if(this.posicion == 0){
+				audioExplosion.currentTime = 0.3;
+				audioExplosion.play();
+			}
+	
 			if(aumentarPosicion){
 				++this.posicion;
 			}
@@ -75,12 +89,15 @@ window.onload = function() {
 			}
 			
 			await sleep(100);
-
-			return this.animacionExplosion(true);
+	
+			return this.animacionExplosion(true);*/
 		}
 	}
+
 	
 	Explosion.prototype = new ObjetoBatalla();
+
+	Explosion.prototype.audio = audioExplosion;
 	
 	Explosion.prototype.desaparecerExplosion = function(){
 		console.log('Antes: ' + ARRAYEXPLOSIONES.length);
@@ -142,7 +159,9 @@ window.onload = function() {
 						if(ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen >= this.x && ARRAYATAQUES[i].x <= this.x + this.anchoImagen){
 							let explosion = new Explosion(ARRAYATAQUES[i].x, ARRAYATAQUES[i].y, VELOCIDADEXPLOSION, imagenExplosion,[[63,1662],[24,1431],[18,1116],[0,797],[1,464],[16,189],[48,0]], [[245, 264],[245, 230],[245, 264],[245, 264],[245, 274],[245, 264],[245, 190]], 85, 85);
 							ARRAYEXPLOSIONES.push(explosion);
-							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(false);
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(0, ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].arrayBidimensionalPosiciones.length - 1, 100);
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].audio.currentTime = 0;
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].audio.play();
 							ARRAYATAQUES.splice(i,1);
 							this.vida -= 100;
 							if(this.vida <= 0){
@@ -155,7 +174,9 @@ window.onload = function() {
 						if((ARRAYATAQUES[i].x + ARRAYATAQUES[i].anchoImagen >= this.x) && (ARRAYATAQUES[i].x <= this.x + this.anchoImagen)){
 							let explosion = new Explosion(ARRAYATAQUES[i].x, ARRAYATAQUES[i].y, VELOCIDADEXPLOSION, imagenExplosion,[[63,1662],[24,1431],[18,1116],[0,797],[1,464],[16,189],[48,0]], [[245, 264],[245, 230],[245, 264],[245, 264],[245, 274],[245, 264],[245, 190]], 85, 85);
 							ARRAYEXPLOSIONES.push(explosion);
-							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(false);
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].animacionExplosion(0, ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].arrayBidimensionalPosiciones.length - 1, 100);
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].audio.currentTime = 0;
+							ARRAYEXPLOSIONES[ARRAYEXPLOSIONES.length - 1].audio.play();
 							ARRAYATAQUES.splice(i,1);
 							this.vida -= 100;
 							if(this.vida <= 0){
