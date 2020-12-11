@@ -5,6 +5,7 @@ window.onload = function() {
 	const audioExplosion = document.getElementById('audioExplosion');
 	const ANCHOCANVAS = 500, ALTOCANVAS = 500;
 	let auxVidaJugador = 2000, auxVidaMaquina = 2000;
+	let siguienteEscudo, randomSalidaEscudo;
 	const posicionEnArrayExplosion = [];
 	let c = 0;
 	let TAMAÑONAVEX = 40;
@@ -12,16 +13,19 @@ window.onload = function() {
 	const ARRAYPOKEMON = [];
 	const ARRAYATAQUES = [];
 	const ARRAYEXPLOSIONES = [];
+	const ARRAYESCUDOS = [];
 	let cont = 0, numeroAleatorioIA;
 	let puedoAtacar = true, permisoDispararIA = true;
 	let imagenExplosion;
 	let randomOIA;
+	let intervaloEscudo;
 	const VIDAPIKACHU = 2000, VIDASOLDADO = 3000;
 	const VELOCIDADEXPLOSION = 0;
 	const VELOCIDADPIKACHU = 3, VELOCIDADRAICHU = 5;
 	const VELOCIDADATAQUERAYODELAMUERTE = 9;
-	const YMAQUINA = 35;
-	const YJUGADOR = 425;   // posición inicial y del rectángulo
+	let yEscudo;
+	const YMAQUINA = 35, YJUGADOR = 425;   // posiciones y iniciales
+	const XESCUDO = -ANCHOCANVAS / 10 - 1;
 	let canvas;  // variable que referencia al elemento canvas del html
 	let ctx;     // contexto de trabajo
 	var id;      // id de la animación
@@ -54,10 +58,64 @@ window.onload = function() {
 	ObjetoBatalla.prototype.animacionGenerica = async function(posicionEmpezarAnimacion, posicionTerminarAnimacion, milisegundosEntreFrames){
 		if(posicionEmpezarAnimacion <= posicionTerminarAnimacion){
 			this.posicion = posicionEmpezarAnimacion;
-			console.log('Controlado por jugador: ' + this.controladoPorJugador + ' y ' + this.posicion);
 			await sleep(milisegundosEntreFrames);
 			return this.animacionGenerica(this.posicion + 1, posicionTerminarAnimacion, milisegundosEntreFrames);
 		}
+	}
+
+	ObjetoBatalla.prototype.generaPosicionArriba = function() {
+		this.y = this.y - this.velocidad;
+
+		/*for(i in ARRAYPOKEMON){
+			if(this.lanzadoPorJugador == ARRAYPOKEMON[i].controladoPorJugador){
+				if(this.x < ARRAYPOKEMON[i].x){
+					this.x += (ARRAYPOKEMON[i].x - this.x) * (ARRAYPOKEMON[i].x - this.x) / 100;
+				}else if(this.x > ARRAYPOKEMON[i].x){
+					this.x -= (this.x -ARRAYPOKEMON[i].x) * (this.x - ARRAYPOKEMON[i].x) / 100;
+				}
+			}
+		}*/
+	}
+
+	ObjetoBatalla.prototype.generaPosicionAbajo = function() {
+		this.y = this.y + this.velocidad;	
+	}
+
+	ObjetoBatalla.prototype.generaPosicionDerecha = function() {
+		
+		this.x = this.x + this.velocidad;
+		
+		if (this.x + this.anchoImagen >= TOPEDERECHA) {
+			
+			// If at edge, reset ship position and set flag.
+			this.x = TOPEDERECHA - this.anchoImagen;   
+		}		
+		
+	}
+	
+	
+	ObjetoBatalla.prototype.generaPosicionIzquierda = function() {
+		
+		this.x = this.x - this.velocidad;
+		
+		if (this.x < TOPEIZQUIERDA) {
+			
+			// If at edge, reset ship position and set flag.
+			this.x = TOPEIZQUIERDA;
+		}
+		
+	}
+	
+	ObjetoBatalla.prototype.pintarObjeto = function(){
+		ctx.drawImage(this.imagen, // Imagen completa con todos los comecocos (Sprite)
+		this.arrayBidimensionalPosiciones[this.posicion][0],    // Posicion X del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
+		this.arrayBidimensionalPosiciones[this.posicion][1],	  // Posicion Y del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
+		this.arrayBidimensionalDimensionesDibujo[this.posicion][0], 		  // Tamaño X del comecocos que voy a recortar para dibujar
+		this.arrayBidimensionalDimensionesDibujo[this.posicion][1],	      // Tamaño Y del comecocos que voy a recortar para dibujar
+		this.x,      // Posicion x de pantalla donde voy a dibujar el comecocos recortado
+		this.y,				  // Posicion y de pantalla donde voy a dibujar el comecocos recortado
+		this.anchoImagen,		  // Tamaño X del comecocos que voy a dibujar
+		this.altoImagen);       // Tamaño Y del comecocos que voy a dibujar
 	}
 
 	function Explosion(x_, y_,velocidad,imagen,arrayBidimensionalPosiciones,arrayBidimensionalDimensionesDibujo,anchoImagen,altoImagen){
@@ -100,9 +158,7 @@ window.onload = function() {
 	Explosion.prototype.audio = audioExplosion;
 	
 	Explosion.prototype.desaparecerExplosion = function(){
-		console.log('Antes: ' + ARRAYEXPLOSIONES.length);
 		ARRAYEXPLOSIONES.splice(0,1);
-		console.log('Después: ' + ARRAYEXPLOSIONES.length);
 	}
 	
 	//La variable pokemonDeUsuario será booleana
@@ -188,61 +244,6 @@ window.onload = function() {
 			}
 		}
 	}
-
-	ObjetoBatalla.prototype.generaPosicionArriba = function() {
-		this.y = this.y - this.velocidad;
-
-		/*for(i in ARRAYPOKEMON){
-			if(this.lanzadoPorJugador == ARRAYPOKEMON[i].controladoPorJugador){
-				if(this.x < ARRAYPOKEMON[i].x){
-					this.x += (ARRAYPOKEMON[i].x - this.x) * (ARRAYPOKEMON[i].x - this.x) / 100;
-				}else if(this.x > ARRAYPOKEMON[i].x){
-					this.x -= (this.x -ARRAYPOKEMON[i].x) * (this.x - ARRAYPOKEMON[i].x) / 100;
-				}
-			}
-		}*/
-	}
-
-	ObjetoBatalla.prototype.generaPosicionAbajo = function() {
-		this.y = this.y + this.velocidad;	
-	}
-
-	ObjetoBatalla.prototype.generaPosicionDerecha = function() {
-		
-		this.x = this.x + this.velocidad;
-		
-		if (this.x + this.anchoImagen >= TOPEDERECHA) {
-			
-			// If at edge, reset ship position and set flag.
-			this.x = TOPEDERECHA - this.anchoImagen;   
-		}		
-		
-	}
-	
-	
-	ObjetoBatalla.prototype.generaPosicionIzquierda = function() {
-		
-		this.x = this.x - this.velocidad;
-		
-		if (this.x < TOPEIZQUIERDA) {
-			
-			// If at edge, reset ship position and set flag.
-			this.x = TOPEIZQUIERDA;
-		}
-		
-	}
-	
-	ObjetoBatalla.prototype.pintarObjeto = function(){
-		ctx.drawImage(this.imagen, // Imagen completa con todos los comecocos (Sprite)
-		this.arrayBidimensionalPosiciones[this.posicion][0],    // Posicion X del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
-		this.arrayBidimensionalPosiciones[this.posicion][1],	  // Posicion Y del sprite donde se encuentra el comecocos que voy a recortar del sprite para dibujar
-		this.arrayBidimensionalDimensionesDibujo[this.posicion][0], 		  // Tamaño X del comecocos que voy a recortar para dibujar
-		this.arrayBidimensionalDimensionesDibujo[this.posicion][1],	      // Tamaño Y del comecocos que voy a recortar para dibujar
-		this.x,      // Posicion x de pantalla donde voy a dibujar el comecocos recortado
-		this.y,				  // Posicion y de pantalla donde voy a dibujar el comecocos recortado
-		this.anchoImagen,		  // Tamaño X del comecocos que voy a dibujar
-		this.altoImagen);       // Tamaño Y del comecocos que voy a dibujar
-	}
 	
 	function pintaRectangulo() {
 		
@@ -261,6 +262,10 @@ window.onload = function() {
 		/*console.log(ARRAYEXPLOSIONES.length);*/
 		for(i in ARRAYEXPLOSIONES){
 			ARRAYEXPLOSIONES[i].pintarObjeto();
+		}
+
+		for(i in ARRAYESCUDOS){
+			ARRAYESCUDOS[i].pintarObjeto();
 		}
 	}
 	
@@ -417,7 +422,6 @@ window.onload = function() {
 
 	Pokemon.prototype.permisoDisparar = function(){
 		if(Math.abs((this.x + this.anchoImagen) - (ARRAYPOKEMON[0].x + ARRAYPOKEMON[0].anchoImagen)) <= ANCHOCANVAS / 4){
-			console.log(ANCHOCANVAS);
 			permisoDispararIA = true;
 		}else{
 			permisoDispararIA = false;
@@ -465,6 +469,10 @@ window.onload = function() {
 		}
 	}
 
+	function generarEscudo(){
+		console.log('Escudo generado');
+	}
+
 	function comprobarAtaques(){
 		for(i in ARRAYPOKEMON){
 			ARRAYPOKEMON[i].atacado();
@@ -491,6 +499,28 @@ window.onload = function() {
 
 	function sleep(ms) {
 		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	function generarEscudo(){
+		intervaloEscudo = Math.random() * 5000;
+		randomSalidaEscudo = Math.floor(Math.random * 2);
+
+		switch(randomSalidaEscudo){
+			case 0:
+				yEscudo = 200;
+				break;
+
+			case 1:
+				yEscudo = 400;
+				break;
+
+			default:
+		}
+
+		setTimeout(function () {
+			let escudo = ObjetoBatalla(XESCUDO, yEscudo, 2, imagenPikachu, [[0,555]], [[100,130]], 40, 50);
+			ARRAYESCUDOS.push(escudo);
+		}, intervaloEscudo);
 	}
 		
 	document.addEventListener("keydown", activaFuncionalidad, false);
@@ -560,5 +590,7 @@ window.onload = function() {
 	setInterval(comprobarAtaques, 1000/200);
 	
 	setInterval(actualizarVidaEnPantalla, 500);
+
+	idIntervaloEscudo = setTimeout(generarEscudo, 1000);
 }
 
